@@ -1,0 +1,40 @@
+{
+    "alarms": [
+    {
+        "alarm_name": "node_memory_utilization",
+        "metric_name": "node_memory_utilization",
+        "comparison_operator": "GreaterThanThreshold",
+        "threshold": 90,
+        "evaluation_periods": 3,
+        "period": 300,
+        "unit": "Percent",
+        "statistic": "Maximum",
+        "datapoints": 2,
+        "namespace": "ContainerInsights",
+        "actions_enabled": true,
+        "alarm_description": "Alarm for high memory utilization",
+        "treat_missing_data": "breaching",
+        "dimensions": [
+            {"Name": "ClusterName", "Value": "Cluster_Name"}
+            ]
+    },
+    {
+        "alarm_name": "node_cpu_utilization",
+        "metric_name": "node_cpu_utilization",
+        "comparison_operator": "GreaterThanThreshold",
+        "threshold": 80,
+        "evaluation_periods": 3,
+        "period": 300,
+        "unit": "Percent",
+        "statistic": "Maximum",
+        "datapoints": 2,
+        "namespace": "ContainerInsights",
+        "actions_enabled": true,
+        "alarm_description": "Alarm for high CPU utilization",
+        "treat_missing_data": "breaching",
+        "dimensions": [
+            {"Name": "ClusterName", "Value": "Cluster_Name"}
+            ]
+    }
+    ]
+}
