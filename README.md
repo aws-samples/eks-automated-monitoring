@@ -1,4 +1,4 @@
-# automated-eks-monitoring
+# eks-automated-monitoring
 CloudWatch provides native solutions to setup alerting and monitoring solution for EKS cluster. This pattern describes and implements CloudWatch alert setup for EKS cluster leveraging Container Insight. Alerts for EKS cluster can be broadly divided into two categories.
 
 ### Static components:
