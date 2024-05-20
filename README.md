@@ -61,7 +61,7 @@ It is extremely important to have automated setup for CloudWatch alert for EKS n
 # Code
 The code for this pattern is available in the automated-eks-monitoring Repository
 ```
-https://gitlab.aws.dev/gwmanish/automated-eks-monitoring/
+https://github.com/aws-samples/eks-automated-monitoring.git
 ```
 
 # Best Practices
@@ -70,9 +70,9 @@ https://gitlab.aws.dev/gwmanish/automated-eks-monitoring/
 # Setup your environment
 To pull down the repo
 ```
-git clone git@ssh.gitlab.aws.dev:gwmanish/automated-eks-monitoring.git
+git clone https://github.com/aws-samples/eks-automated-monitoring.git 
 ```
-This creates a folder named `automated-eks-monitoring`
+This creates a folder named `eks-automated-monitoring`
 
 ## Deploy the infrastructure
 This describes the steps to deploy the EKS Infra and CloudWatch alerts using combination of cloudformation and terraform.
