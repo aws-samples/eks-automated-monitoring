@@ -77,7 +77,7 @@ This creates a folder named `eks-automated-monitoring`
 
 ## Deploy the infrastructure
 This describes the steps to deploy the EKS Infra and CloudWatch alerts using combination of cloudformation and terraform.
-- Refer the ./script/deploy to pass variables for terraform backend and role to provision the infrastructure
+- Refer the **./script/deploy** to pass variables for terraform backend and role to provision the infrastructure
 
     Mandatory variables
     - SNS_EMAIL - Email Address to recieve alerts and notifications
