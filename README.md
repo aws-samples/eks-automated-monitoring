@@ -3,21 +3,22 @@ CloudWatch provides native solutions to setup alerting and monitoring solution f
 
 ### Static components:
 
-Once EKS cluster is setup, There are system/application pods, daemonset etc. Identifier of these components remain static on cluster until explicitly updated. This pattern describes method to set CloudWatch alert using CloudWatch metrics and Terraform.
+Once EKS cluster is setup, there are kubernetes objects like system/application pods, daemonset and etc. Identifier of these components remain static on cluster until explicitly updated. This blog describes method to set CloudWatch alarms using [Amazon CloudWatch Container Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-EKS.html) metrics and [Terraform](https://www.terraform.io/).
 
 ### Dynamic components:
 
-EKS cluster has one or more EKS node group which has varying number of instances known as EKS nodes. There can be multiple EKS nodes depending on demand and handled by Auto Scaling Group. In the event of scale out, new node joins cluster whereas in the event of scale in redundant nodes get deleted. There are other events as well as EKS upgrade, Node patching where number of nodes change for an EKS cluster. CloudWatch metrics utilise instanceID as identifier for alert setup, list of instances (EKS Nodes) is dynamic and keep on changing during scaling event.
+An EKS cluster typically consists of one or more EKS node groups, each containing a varying number of instances referred to as EKS nodes. The number of EKS nodes can fluctuate based on demand and is managed by an Auto Scaling Group. During a Scale-Out event, a new node joins the cluster, while during a Scale-In event, redundant nodes are deleted. Additionally, there are other events such as EKS upgrades and node patching, which also result in change capacity of number of nodes in an EKS cluster. Amazon CloudWatch Container Insights metrics use the instanceID as an identifier for setting up alarms. However, the list of instances (EKS Nodes) is dynamic and changes continuously during scaling events.
+Setting up Amazon CloudWatch alarms for EKS nodes is crucial, especially given their dynamic nature. To tackle this challenge, the blog proposes an event-driven automated solution using Amazon CloudWatch Container Insights metrics and an AWS Lambda function. This approach ensures that alarms are configured automatically, enabling efficient monitoring of EKS nodes despite their fluctuating numbers.
 
-It is extremely important to have automated setup for CloudWatch alert for EKS nodes and requires custom solution to handle its dynamic nature. This pattern describes event-driven automated method to set CloudWatch alert for EKS nodes using CloudWatch metrics and Lambda.
 
 # Prerequisites
-- An active AWS account
-- An AWS User/Role with sufficient permissions to provision resources using Terraform
-- Terraform Cli
-- AWS CLI
-- kubectl
-- git
+* An active AWS account
+* An Amazon Linux/Mac OS Server
+* An AWS User/Role with sufficient permissions to provision resources using Terraform
+* Terraform Cli
+* AWS CLI
+* kubectl
+* git
 
 # Product Versions
 - Terraform v1.7.5
@@ -81,6 +82,8 @@ This describes the steps to deploy the EKS Infra and CloudWatch alerts using com
     Mandatory variables
     - SNS_EMAIL - Email Address to recieve alerts and notifications
     - TF_ROLE - IAM Role ARN has capabilities to launch resources into AWS account
+    - (Optional) Check for any modifications in the predefined alarm list or add new alarms in the file named terraform.tfvars located at the root path of the repository.
+    - (Optional) Include the necessary alarms for EKS node-level monitoring in the alarm_list_inputs.json file located in the **files** folder at the root path of the repository. For demonstration purposes, two alarms have been predefined as part of this code.
     
 
 - This solution will deploy the VPC and its components along with EKS private cluster in us-east-1 region. (You can update the parameters passed to these templates in `./script/deploy.sh` file
@@ -96,30 +99,45 @@ This describes the steps to deploy the EKS Infra and CloudWatch alerts using com
     2. Amazon SNS opens your web browser and displays a subscription confirmation with your subscription ID.
 
 ## Test and Verify the CloudWatch Alarm Setup
-- Steps to verify alarms for static components
-    1. Sign in to your AWS account, and open the AWS Management Console.
-    2. Open to Amazon CloudWatch console and go to Alarms page.
-    3. There should be bunch of alarms created based on the alarm list in terraform.tfvars file.
-    4. Navigate to some of them and explore the configurations.
-- Test creation/deletion of alarms for dynamic components
-    To facilitate the dynamic creation or deletion of alarm nodes during scaling events, two potential scenarios exist.
-    1. **Setting Up Alarms for Existing EKS Nodes:** If there are worker nodes already present before deploying this solution, you can use the following command to trigger the lambda function. This function will set up all alarms specified in the alarm list uploaded to an S3 bucket in JSON format for all EC2 instances.
-    
-    *Note: Lambda function name is printed in output of script ```deploy.sh``` executed in previous step.
+This describes the steps to test and verify the setup
 
-    ```
-    aws lambda invoke --function-name <Lambda function name> --invocation-type RequestResponse output
-    ```
-    
-    *Note: Assume role with sufficient permission to trigger this command. Upon successful completion of above command, email notification will be sent to subscribed emails. Also, this can be verified from CW Alarms page.
+**Verify alarms for static components**
 
-    2. **Setting Up Alarms during auto scaling events:** This can be simulated or tested by increasing/Decreasing (ScaleIn/ScaleOut) the value of variable ```NUM_WORKER_NODES``` in file ```deploy.sh```. 
-    Post change, run the below command.
-        ```
-        ./scripts/deploy.sh -o apply
-        ```
-        Alarm creation will occur upon Auto Scaling Group (ASG) successful launch or successful termination events. Following this, email notifications will be triggered to subscribed email addresses associated with topics ending with ```alarmSetupNotify```.
-    3. Navigate to CloudWatch Alarm page in AWS console and verify all alarms details.
+Below are the Steps to navigate
+
+* Sign in to your AWS account, and open the AWS Management Console.
+* Open to Amazon CloudWatch console and go to Alarms page using navigation bar on the left.
+* There should be bunch of alarms created based on the alarm list in **terraform.tfvars** file.
+* Navigate to some of them and explore the configurations.
+
+
+
+**Verify alarms for dynamic components**
+
+To facilitate the dynamic creation or deletion of alarm nodes during scaling events, two potential scenarios exist.
+
+
+1. **Setting Up Alarms for Existing EKS Nodes**: If there are worker nodes already present before deploying this solution, you can use the following command to trigger the lambda function. This function will set up all alarms specified in the alarm list uploaded to an S3 bucket in JSON format for all EC2 instances.
+
+**_Note_**: Lambda function name is printed in output of script deploy.sh executed in previous step.
+```
+aws lambda invoke --function-name <Lambda function name> --invocation-type RequestResponse output
+```
+**_Note_**: Assume role with sufficient permission to trigger this command. Upon successful completion of above command, email notification will be sent to subscribed emails. Also, this can be verified from CW Alarms page.
+
+
+1. Setting Up Alarms during auto scaling events: This can be simulated or tested by increasing/Decreasing (ScaleIn/ScaleOut) the value of variable NUM_WORKER_NODES in file deploy.sh. Post change, run the below command.
+```
+./scripts/deploy.sh -o apply
+```
+Alarm creation will occur upon Auto Scaling Group (ASG) successful launch or successful termination events. Following this, email notifications will be triggered to subscribed email addresses associated with topics ending with alarmSetupNotify.
+
+1. Navigate to CloudWatch Alarm page and Verify alarms:
+
+    a. Sign in to your AWS account, and open the AWS Management Console.
+
+    b. Open to Amazon CloudWatch console and go to Alarms page using navigation bar on the left.
+
 
 ## Destroy the infrastructure
 To destroy all the resources created by this solution, run below command.
@@ -129,6 +147,6 @@ To destroy all the resources created by this solution, run below command.
 
 # Troubleshooting
 -  Alarm Creation/Deletion Failures Or Notification emails not received
-    1. If the CW alarms are not getting created or deleted, then go to AWS CloudWatch log group of lambda function and check for detailed error. Refer the doc for Accessing logs with the Lambda console
+    1. If the CW alarms are not getting created or deleted, then go to AWS CloudWatch log group of lambda function and check for detailed error. Refer the [doc](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-access-metrics.html#monitoring-console-queries) for Accessing logs with the Lambda console
 
     2. Use lambda Monitoring to check various metrics graphs like Error count and success rate (%), Invocations to get details of lambda function execution rate. Refer the [doc](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-functions-access-metrics.html) for navigation steps
