@@ -37,7 +37,7 @@ Mappings:
   # https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-ami.html
   EksAmiIds:
     us-east-1:
-      Standard: ami-0515f3963c203d061
+      Standard: ami-0264263f58566cf19
     us-east-2:
       Standard: ami-0f23c7c0c6e362b29
     us-west-2:
